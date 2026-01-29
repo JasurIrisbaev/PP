@@ -1,3 +1,2 @@
-a = 1
-b = 2
-print(a+b)
+if 5 > 2:
+  print("Five is greater than two!")
