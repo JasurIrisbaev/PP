@@ -1,0 +1,5 @@
+print(min(1,5,2))
+print(max(1,5,2))
+print(abs(-10))
+print(round(3.14,1))
+print(pow(2,3))
