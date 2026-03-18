@@ -1,8 +1,8 @@
 import re
 
-text = "apple banana cherry"
+text = "Apple banana cherry"
 
-pattern = r"[ae]"
+pattern = r"[A-Z]"
 
 result = re.findall(pattern, text)
 
