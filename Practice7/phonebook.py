@@ -3,7 +3,7 @@ from connect import connect
 from config import load_config
 
 
-# 1. Добавление из CSV
+
 def insert_from_csv(conn, filename):
     with open(filename, newline='') as f:
         reader = csv.reader(f)
@@ -17,7 +17,7 @@ def insert_from_csv(conn, filename):
     print("Data inserted from CSV")
 
 
-# 2. Добавление с консоли
+
 def insert_from_console(conn):
     name = input("Enter name: ")
     phone = input("Enter phone: ")
@@ -31,21 +31,22 @@ def insert_from_console(conn):
     print("Contact added")
 
 
-# 3. Обновление
+
 def update_contact(conn):
     name = input("Enter name to update: ")
+    new_name = input("Enter new name: ")
     new_phone = input("Enter new phone: ")
 
     with conn.cursor() as cur:
         cur.execute(
-            "UPDATE phonebook SET phone = %s WHERE name = %s",
-            (new_phone, name)
+            "UPDATE phonebook SET name = %s, phone = %s WHERE name = %s",
+            (new_name, new_phone, name)
         )
     conn.commit()
     print("Updated")
 
 
-# 4. Поиск
+
 def search_contacts(conn):
     keyword = input("Search: ")
 
@@ -60,7 +61,7 @@ def search_contacts(conn):
             print(row)
 
 
-# 5. Удаление
+
 def delete_contact(conn):
     value = input("Enter name or phone to delete: ")
 
@@ -73,7 +74,6 @@ def delete_contact(conn):
     print("Deleted")
 
 
-# 6. Показать все
 def show_all(conn):
     with conn.cursor() as cur:
         cur.execute("SELECT * FROM phonebook")
@@ -83,7 +83,7 @@ def show_all(conn):
             print(row)
 
 
-# МЕНЮ
+
 def main():
     config = load_config()
     conn = connect(config)
