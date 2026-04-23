@@ -1,59 +1,66 @@
 import pygame
-import math
-import datetime
+from datetime import datetime
 
-WIDTH = 600
-HEIGHT = 600
+pygame.init()
 
+# окно
+WIDTH, HEIGHT = 600, 600
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Mickey Clock")
 
-def run_clock():
-    pygame.init()
+clock = pygame.time.Clock()
 
-    screen = pygame.display.set_mode((WIDTH, HEIGHT))
-    pygame.display.set_caption("Mickey Clock")
+# === ФОН (с сохранением пропорций) ===
+bg = pygame.image.load("images/clock.jpeg").convert()
 
-    center = (WIDTH // 2, HEIGHT // 2)
-    radius = 200
+bg_rect_original = bg.get_rect()
+scale_factor = HEIGHT / bg_rect_original.height
+new_width = int(bg_rect_original.width * scale_factor)
 
-    running = True
-    clock = pygame.time.Clock()
+bg = pygame.transform.scale(bg, (new_width, HEIGHT))
+bg_rect = bg.get_rect(center=(WIDTH // 2, HEIGHT // 2))
 
-    while running:
-        screen.fill((255, 255, 255))
+# === РУКА (с прозрачностью) ===
+hand = pygame.image.load("images/mickey_hand-removebg-preview.png").convert_alpha()
+hand = pygame.transform.scale(hand, (120, 300))
 
-        # draw clock circle
-        pygame.draw.circle(screen, (0, 0, 0), center, radius, 3)
-
-        now = datetime.datetime.now()
-        seconds = now.second
-        minutes = now.minute
-
-        # calculate angles
-        sec_angle = math.radians(seconds * 6 - 90)
-        min_angle = math.radians(minutes * 6 - 90)
-
-        # seconds hand
-        sec_x = center[0] + 180 * math.cos(sec_angle)
-        sec_y = center[1] + 180 * math.sin(sec_angle)
-
-        # minutes hand
-        min_x = center[0] + 140 * math.cos(min_angle)
-        min_y = center[1] + 140 * math.sin(min_angle)
-
-        # draw hands
-        pygame.draw.line(screen, (255, 0, 0), center, (sec_x, sec_y), 3)
-        pygame.draw.line(screen, (0, 0, 255), center, (min_x, min_y), 5)
-
-        pygame.display.update()
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-
-        clock.tick(1)
-
-    pygame.quit()
+# центр часов
+CENTER = (WIDTH // 2, HEIGHT // 2)
 
 
-if __name__ == "__main__":
-    run_clock()
+def rotate(image, angle):
+    rotated = pygame.transform.rotate(image, angle)
+    rect = rotated.get_rect(center=CENTER)
+    return rotated, rect
+
+
+running = True
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+    # время
+    now = datetime.now()
+    sec = now.second
+    minute = now.minute
+
+    # углы
+    sec_angle = -sec * 6
+    min_angle = -minute * 6
+
+    # вращение
+    sec_hand, sec_rect = rotate(hand, sec_angle)
+    min_hand, min_rect = rotate(hand, min_angle)
+
+    # рисуем
+    screen.fill((255, 255, 255))
+    screen.blit(bg, bg_rect)
+
+    screen.blit(min_hand, min_rect)   # минутная
+    screen.blit(sec_hand, sec_rect)   # секундная
+
+    pygame.display.flip()
+    clock.tick(60)
+
+pygame.quit()
