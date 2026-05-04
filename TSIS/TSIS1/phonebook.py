@@ -9,7 +9,7 @@ def init_db():
         with open(fname) as f:
             cur.execute(f.read())
     conn.commit(); cur.close(); conn.close()
-    print("БД инициализирована.")
+    print("DB initialized.")
 
 
 def add_contact(name, email=None, birthday=None, group=None):
@@ -61,7 +61,7 @@ def paginate(page_size=5):
         cur.execute("SELECT * FROM get_contacts_page(%s,%s)", (page_size, offset))
         rows = cur.fetchall(); cur.close(); conn.close()
         if not rows:
-            print("Контакты закончились."); break
+            print("No more contacts."); break
         print_contacts(rows)
         cmd = input("next/prev/quit: ").strip().lower()
         if cmd == "next":   offset += page_size
@@ -87,7 +87,7 @@ def export_json(filename="contacts.json"):
     cur.close(); conn.close()
     with open(filename, "w", encoding="utf-8") as f:
         json.dump(contacts, f, ensure_ascii=False, indent=2)
-    print(f"Экспортировано {len(contacts)} контактов в {filename}")
+    print(f"Exported {len(contacts)} contacts to {filename}")
 
 
 def import_json(filename="contacts.json"):
@@ -98,7 +98,7 @@ def import_json(filename="contacts.json"):
         cur.execute("SELECT id FROM contacts WHERE name=%s", (c["name"],))
         exists = cur.fetchone()
         if exists:
-            ans = input(f'Дубликат "{c["name"]}". Перезаписать? (y/n): ')
+            ans = input(f'Duplicate "{c["name"]}". Overwrite? (y/n): ')
             if ans.lower() != "y":
                 continue
             cur.execute("DELETE FROM contacts WHERE id=%s", (exists[0],))
@@ -106,7 +106,7 @@ def import_json(filename="contacts.json"):
         for ph in c.get("phones", []):
             add_phone_py(cid, ph["phone"], ph.get("type", "mobile"))
     conn.commit(); cur.close(); conn.close()
-    print("Импорт завершён.")
+    print("Import completed.")
 
 
 def import_csv(filename="contacts.csv"):
@@ -117,13 +117,13 @@ def import_csv(filename="contacts.csv"):
                               row.get("birthday") or None, row.get("group") or None)
             if row.get("phone"):
                 add_phone_py(cid, row["phone"], row.get("type", "mobile"))
-    print("CSV импортирован.")
+    print("CSV imported.")
 
 
 def print_contacts(rows):
     if not rows:
-        print("Ничего не найдено."); return
-    print(f"{'ID':<4} {'Имя':<20} {'Email':<25} {'День рожд.':<12} {'Группа'}")
+        print("Nothing found."); return
+    print(f"{'ID':<4} {'Name':<20} {'Email':<25} {'Birthday':<12} {'Group'}")
     print("-" * 70)
     for r in rows:
         print(f"{r[0]:<4} {str(r[1]):<20} {str(r[2] or ''):<25} {str(r[3] or ''):<12} {r[4] or ''}")
@@ -132,69 +132,69 @@ def menu():
     init_db()
     while True:
         print("""
-=== Телефонная книга ===
-1. Добавить контакт
-2. Поиск (имя / email / телефон)
-3. Фильтр по группе
-4. Листать контакты (пагинация)
-5. Добавить телефон к контакту
-6. Переместить в группу
-7. Импорт CSV
-8. Экспорт JSON
-9. Импорт JSON
-0. Выход""")
-        ch = input("Выбор: ").strip()
+=== Phone Book ===
+1. Add contact
+2. Search (name / email / phone)
+3. Filter by group
+4. Browse contacts (pagination)
+5. Add phone to contact
+6. Move to group
+7. Import CSV
+8. Export JSON
+9. Import JSON
+0. Exit""")
+        ch = input("Choice: ").strip()
 
         if ch == "1":
-            name = input("Имя: ")
-            email = input("Email (Enter пропустить): ") or None
-            bday = input("День рождения YYYY-MM-DD (Enter пропустить): ") or None
-            group = input("Группа (Family/Work/Friend/Other): ") or None
+            name = input("Name: ")
+            email = input("Email (Enter to skip): ") or None
+            bday = input("Birthday YYYY-MM-DD (Enter to skip): ") or None
+            group = input("Group (Family/Work/Friend/Other): ") or None
             cid = add_contact(name, email, bday, group)
-            phone = input("Телефон: ")
-            ptype = input("Тип (home/work/mobile): ") or "mobile"
+            phone = input("Phone: ")
+            ptype = input("Type (home/work/mobile): ") or "mobile"
             add_phone_py(cid, phone, ptype)
-            print("Добавлено!")
+            print("Added!")
 
         elif ch == "2":
-            q = input("Запрос: ")
+            q = input("Query: ")
             print_contacts(search(q))
 
         elif ch == "3":
-            grp = input("Группа: ")
-            sort = input("Сортировка (name/birthday/date): ") or "name"
+            grp = input("Group: ")
+            sort = input("Sort (name/birthday/date): ") or "name"
             print_contacts(filter_by_group(grp, sort))
 
         elif ch == "4":
             paginate()
 
         elif ch == "5":
-            name = input("Имя контакта: ")
-            phone = input("Телефон: ")
-            ptype = input("Тип (home/work/mobile): ") or "mobile"
+            name = input("Contact name: ")
+            phone = input("Phone: ")
+            ptype = input("Type (home/work/mobile): ") or "mobile"
             conn = get_conn(); cur = conn.cursor()
             cur.execute("CALL add_phone(%s,%s,%s)", (name, phone, ptype))
             conn.commit(); cur.close(); conn.close()
-            print("Телефон добавлен.")
+            print("Phone added.")
 
         elif ch == "6":
-            name = input("Имя контакта: ")
-            grp = input("Новая группа: ")
+            name = input("Contact name: ")
+            grp = input("New group: ")
             conn = get_conn(); cur = conn.cursor()
             cur.execute("CALL move_to_group(%s,%s)", (name, grp))
             conn.commit(); cur.close(); conn.close()
-            print("Перемещено.")
+            print("Moved.")
 
         elif ch == "7":
-            fn = input("Файл CSV (contacts.csv): ") or "contacts.csv"
+            fn = input("CSV file (contacts.csv): ") or "contacts.csv"
             import_csv(fn)
 
         elif ch == "8":
-            fn = input("Файл JSON (contacts.json): ") or "contacts.json"
+            fn = input("JSON file (contacts.json): ") or "contacts.json"
             export_json(fn)
 
         elif ch == "9":
-            fn = input("Файл JSON (contacts.json): ") or "contacts.json"
+            fn = input("JSON file (contacts.json): ") or "contacts.json"
             import_json(fn)
 
         elif ch == "0":
